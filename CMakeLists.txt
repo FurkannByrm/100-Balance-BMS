@@ -1,7 +1,15 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.10)
 
-project(dalybms)
+project(BMSUART)
 
-add_executable(dalybms main.cpp daly-bms-uart.cpp daly-bms-uart.h)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-install(TARGETS dalybms RUNTIME DESTINATION bin)
+
+set(SOURCES
+    src/main.cpp
+    src/bms_uart.cpp
+)
+
+add_executable(bms ${SOURCES})
+include_directories(${CMAKE_SOURCE_DIR}/include)

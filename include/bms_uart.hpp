@@ -1,22 +1,30 @@
-#ifndef DALY_BMS_UART_H
-#define DALY_BMS_UART_H
+#ifndef BMS_UART_HPP
+#define BMS_UART_HPP
+
 #include <string>
 #include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <termios.h>
+#include <termio.h>
 #include <sys/select.h>
 #include <errno.h>
 #include <stdio.h>
-#define XFER_BUFFER_LENGTH 13
-#define MIN_NUMBER_CELLS 1
-#define MAX_NUMBER_CELLS 48
-#define MIN_NUMBER_TEMP_SENSORS 1
-#define MAX_NUMBER_TEMP_SENSORS 16
+#include <stdlib.h>
+#include <math.h>
+#include <memory.h>
+#include <iostream>
 
-class Daly_BMS_UART
+
+
+class BMS_UART
 {
-public:
+    public:
+    static constexpr int XFER_BUFFER_LENGTH = 13;
+    static constexpr int MIN_NUMBER_CELLS = 1;
+    static constexpr int MAX_NUMBER_CELLS  = 48;
+    static constexpr int MIN_NUMBER_TEMP_SENSORS = 1;
+    static constexpr int MAX_NUMBER_TEMP_SENSORS  = 16;
+
     enum COMMAND
     {
         VOUT_IOUT_SOC = 0x90,
@@ -33,9 +41,10 @@ public:
         BMS_RESET = 0x00,
     };
 
-    /**
-     * @brief get struct holds all the data collected from the BMS and is populated using the update() API
-     */
+     /**
+     get struct holds all the data collected from the BMS and is populated using the update() API
+     **/
+
     struct
     {
         // data from 0x90
@@ -84,8 +93,8 @@ public:
         std::string aDebug;
     } get;
 
-    /**
-     * @brief alarm struct holds booleans corresponding to all the possible alarms
+     /**
+     * alarm struct holds booleans corresponding to all the possible alarms
      * (aka errors/warnings) the BMS can report
      */
 
@@ -155,58 +164,61 @@ public:
         bool failureOfLowVoltageNoCharging;
     } alarm;
 
-    /**
-     * @brief Construct a new Daly_BMS_UART object
+      /**
+     * Construct a new BMS_UART object
      *
      * @param serialIntf UART interface BMS is connected to
      */
-    Daly_BMS_UART(const std::string& serialDev);
+    BMS_UART(const std::string& serialDev);
 
     /**
-     * @brief Initializes this driver
+     * Initializes this driver
      * @details Configures the serial peripheral and pre-loads the transmit buffer with command-independent bytes
      */
     bool Init();
 
-    /**
-     * @brief Updating the Data from the BMS
+
+      /**
+     *Updating the Data from the BMS
      */
     bool update();
 
-    /**
-     * @brief Gets Voltage, Current, and SOC measurements from the BMS
+
+     /**
+     *Gets Voltage, Current, and SOC measurements from the BMS
      * @return True on successful aquisition, false otherwise
      */
     bool getPackMeasurements();
 
     /**
-     * @brief Gets the pack temperature from the min and max of all the available temperature sensors
+     * Gets the pack temperature from the min and max of all the available temperature sensors
      * @details Populates tempMax, tempMax, and tempAverage in the "get" struct
      * @return True on successful aquisition, false otherwise
      */
     bool getPackTemp();
 
     /**
-     * @brief Returns the highest and lowest individual cell voltage, and which cell is highest/lowest
+     * Returns the highest and lowest individual cell voltage, and which cell is highest/lowest
      * @details Voltages are returned as floats with milliVolt precision (3 decimal places)
      * @return True on successful aquisition, false otherwise
      */
     bool getMinMaxCellVoltage();
 
+
     /**
-     * @brief Get the general Status Info
+     * Get the general Status Info
      *
      */
     bool getStatusInfo();
 
     /**
-     * @brief Get Cell Voltages
+     * Get Cell Voltages
      *
      */
     bool getCellVoltages();
 
     /**
-     * @brief   Each temperature accounts for 1 byte, according to the
+     *   Each temperature accounts for 1 byte, according to the
                 actual number of temperature send, the maximum 21
                 byte, send in 3 frames
                 Byte0:frame number, starting at 0
@@ -216,7 +228,7 @@ public:
     bool getCellTemperature();
 
     /**
-     * @brief   0： Closed 1： Open
+     *   0： Closed 1： Open
                 Bit0: Cell 1 balance state
                 ...
                 Bit47:Cell 48 balance state
@@ -226,31 +238,31 @@ public:
     bool getCellBalanceState();
 
     /**
-     * @brief Get the Failure Codes
+     * Get the Failure Codes
      *
      */
     bool getFailureCodes();
 
     /**
-     * @brief
+     * 
      * set the Discharging MOS State
      */
     bool setDischargeMOS(bool sw);
 
     /**
-     * @brief set the Charging MOS State
+     * set the Charging MOS State
      *
      */
     bool setChargeMOS(bool sw);
 
     /**
-     * @brief Read the charge and discharge MOS States
+     *  Read the charge and discharge MOS States
      *
      */
     bool getDischargeChargeMosStatus();
 
     /**
-     * @brief Reseting The BMS
+     * Reseting The BMS
      * @details Reseting the BMS and let it restart
      */
     bool setBmsReset();
@@ -260,49 +272,53 @@ private:
     bool readyRead(bool delayed = false);
     
     /**
-     * @brief Sends a complete packet with the specified command
+     * Sends a complete packet with the specified command
      * @details calculates the checksum and sends the command over the specified serial connection
      */
     void sendCommand(COMMAND cmdID);
 
     /**
-     * @brief Send the command ID to the BMS
+     *  Send the command ID to the BMS
      * @details
      * @return True on success, false on failure
      */
     bool receiveBytes(void);
 
     /**
-     * @brief Validates the checksum in the RX Buffer
+     *  Validates the checksum in the RX Buffer
      * @return true if checksum matches, false otherwise
      */
     bool validateChecksum();
 
     /**
-     * @brief Prints out the contense of the RX buffer
+     * Prints out the contense of the RX buffer
      * @details Useful for debugging
      */
     void barfRXBuffer();
 
     /**
-     * @brief Serial interface used for communication
+     *  Serial interface used for communication
      * @details This is set in the constructor
      */
     int my_serialIntf;
 
     /**
-     * @brief Buffer used to transmit data to the BMS
+     *  Buffer used to transmit data to the BMS
      * @details Populated primarily in the "Init()" function, see the readme for more info
      */
     uint8_t my_txBuffer[XFER_BUFFER_LENGTH];
 
     /**
-     * @brief Buffer filled with data from the BMS
+     *  Buffer filled with data from the BMS
      */
     uint8_t my_rxBuffer[XFER_BUFFER_LENGTH];
     
     
     fd_set readfd;
+
+
+
 };
 
-#endif // DALY_BMS_UART_H
+
+#endif //BMS_UART_HPP

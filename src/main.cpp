@@ -1,8 +1,8 @@
 #include <iostream>
-#include "daly-bms-uart.h"
+#include "bms_uart.hpp"
 #include <time.h>
 int main(int argc, char **argv) {
-    Daly_BMS_UART bms(argv[1]);
+    BMS_UART bms(argv[1]);
     bms.Init();
     
     while ( true ) {
